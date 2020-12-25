@@ -61,7 +61,7 @@ class mainApp(tkinter.Tk):
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
         self.frames = {}
-        for F in {StartPage,tictactoe}:
+        for F in {StartPage,tictactoe,CompPlay}:
             page_name = F.__name__
             frame = F(parent=container,controller=self) 
             self.frames[page_name] = frame
@@ -83,27 +83,27 @@ class StartPage(tkinter.Frame):
         
         tkinter.Label(self,text='Tic Tac Toe').pack()
         tkinter.Button(self,text='With Player',command=lambda: self.controller.show_frame("tictactoe")).pack()
-        tkinter.Button(self,text='With Computer').pack()
+        tkinter.Button(self,text='With Computer',command=lambda: self.controller.show_frame("CompPlay")).pack()
 
 class tictactoe(tkinter.Frame):
-    def __init__(self,parent,controller,mode=None):
+    def __init__(self,parent,controller):
         tkinter.Frame.__init__(self,parent)
         self.controller = controller
-        self.button = [[],[],[]]
+        self.board = [[],[],[]]
         self.chance = 'X'
         self.color = 'red'
         for r in range(3):
             for c in range(3):
-                self.button[r].append(tkinter.Button(self,font='arial 30',relief='sunken',width=3,height=1))
-                self.button[r][c].config(command= lambda row=r,column=c:self.click(row,column))
-                self.button[r][c].grid(row=r,column=c)
+                self.board[r].append(tkinter.Button(self,font='arial 30',relief='sunken',width=3,height=1))
+                self.board[r][c].config(command= lambda row=r,column=c:self.click(row,column))
+                self.board[r][c].grid(row=r,column=c)
+
         self.Label = tkinter.Label(self,text=f"{self.chance}'s chance",font='arial 15')
         self.Label.grid(row=3,column=0,columnspan=2)
         tkinter.Button(self,text='Go back',command=lambda : controller.show_frame("StartPage")).grid(row=3,column=2)
 
     def click(self,row,column):
-        self.button[row][column].config(text=self.chance,fg='blue',state="disabled",disabledforeground=self.color)
-        
+        self.board[row][column].config(text=self.chance,fg='blue',state="disabled",disabledforeground=self.color)        
         if self.chance == 'X':
             self.color = 'blue'          
             self.chance = 'O'
@@ -119,29 +119,29 @@ class tictactoe(tkinter.Frame):
     def boardFull(self):
         for r in range(3):
             for c in range(3):
-                if self.button[r][c]['text'] == '':
+                if self.board[r][c]['text'] == '':
                     return False
         return True
 
     def check(self):
         #rows
         for i in range(3):
-            if self.button[i][0]['text'] == self.button[i][1]['text']==self.button[i][2]['text']!='':
-                tmsg.showinfo("Winner",f"{self.button[i][0]['text']} Won")
+            if self.board[i][0]['text'] == self.board[i][1]['text']==self.board[i][2]['text']!='':
+                tmsg.showinfo("Winner",f"{self.board[i][0]['text']} Won")
                 self.reset()
         
         #columns
         for i in range(3):
-            if self.button[0][i]['text'] == self.button[1][i]['text']==self.button[2][i]['text']!='':
-                tmsg.showinfo("Winner",f"{self.button[0][i]['text']} Won")
+            if self.board[0][i]['text'] == self.board[1][i]['text']==self.board[2][i]['text']!='':
+                tmsg.showinfo("Winner",f"{self.board[0][i]['text']} Won")
                 self.reset()
         
         #diagonal
-        if self.button[0][0]['text'] == self.button[1][1]['text']==self.button[2][2]['text']!='':
-                tmsg.showinfo("Winner",f"{self.button[0][0]['text']} Won")
+        if self.board[0][0]['text'] == self.board[1][1]['text']==self.board[2][2]['text']!='':
+                tmsg.showinfo("Winner",f"{self.board[0][0]['text']} Won")
                 self.reset()
-        elif self.button[2][0]['text'] == self.button[1][1]['text']==self.button[0][2]['text']!='':
-                tmsg.showinfo("Winner",f"{self.button[2][0]['text']} Won")
+        elif self.board[2][0]['text'] == self.board[1][1]['text']==self.board[0][2]['text']!='':
+                tmsg.showinfo("Winner",f"{self.board[2][0]['text']} Won")
                 self.reset()
 
 
@@ -150,8 +150,89 @@ class tictactoe(tkinter.Frame):
         self.color = 'red'
         for r in range(3):
             for c in range(3):
-                self.button[r][c].config(state='active',text='')
+                self.board[r][c].config(state='active',text='')
         self.Label.config(text=f"{self.chance}'s chance")
+
+
+
+
+
+class CompPlay(tictactoe,tkinter.Frame):
+    def __init__(self,parent,controller):
+        tkinter.Frame.__init__(self,parent)
+        tictactoe.__init__(self,parent,controller)
+        self.controller = controller
+        self.boardCopy = [['','',''],['','',''],['','','']]
+    
+    def click(self,row,column):
+        self.board[row][column].config(text=self.chance,state="disabled",disabledforeground=self.color)
+        self.color = 'blue'          
+        self.chance = 'O'
+        self.boardCopy[row][column]='X'
+        self.Label.config(text=f"{self.chance}'s chance")
+        if not self.check(self.boardCopy,'X'):
+            r,c = self.compMove()
+            self.board[r][c].config(text=self.chance,state="disabled",disabledforeground=self.color)
+            self.color = 'red'          
+            self.chance = 'X'
+            self.boardCopy[r][c]='O'
+            self.Label.config(text=f"{self.chance}'s chance")
+            if self.check(self.boardCopy,'O'):
+                tmsg.showinfo('Winner','O won')
+                self.boardCopy = [['','',''],['','',''],['','','']]
+                self.reset()
+        else:
+            tmsg.showinfo('Winner','X won')
+            self.boardCopy = [['','',''],['','',''],['','','']]
+            self.reset()
+        if self.boardFull():
+            tmsg.showinfo("Winner",'Draw')
+            self.boardCopy = [['','',''],['','',''],['','','']]
+            self.reset()
+
+    def check(self,board,let):
+        #rows
+        for i in range(3):
+            if board[i][0]== board[i][1]==board[i][2]==let:
+                return True
+        
+        #columns
+        for i in range(3):
+            if board[0][i] == board[1][i]==board[2][i]==let:
+                return True
+        
+        #diagonal
+        if board[0][0]== board[1][1]==board[2][2]==let:
+                return True
+        elif board[2][0] == board[1][1]==board[0][2]==let:
+                return True
+
+        return False
+
+
+    def compMove(self):
+        # possibleMoves = []
+        # for r in range(3):
+        #     for c in range(3):
+        #         if self.boardCopy[r][c] == '':
+        #             possibleMoves.append((r,c))
+        
+        # for let in ['O','X']:
+        #     for r,c in possibleMoves:
+        #         boardCopy = [row[:] for row in self.boardCopy]
+        #         boardCopy[r][c] = let
+        #         if self.check(boardCopy,let):
+        #             move = (r,c)
+        #             self.click(r,c)
+        #             return 0
+        import random
+        possibleMoves = []
+        for r in range(3):
+            for c in range(3):
+                if self.boardCopy[r][c] == '':
+                    possibleMoves.append((r,c))
+        return possibleMoves[random.choice(range(len(possibleMoves)))]
+        
 
 
 
