@@ -211,29 +211,35 @@ class CompPlay(tictactoe,tkinter.Frame):
 
 
     def compMove(self):
-        # possibleMoves = []
-        # for r in range(3):
-        #     for c in range(3):
-        #         if self.boardCopy[r][c] == '':
-        #             possibleMoves.append((r,c))
-        
-        # for let in ['O','X']:
-        #     for r,c in possibleMoves:
-        #         boardCopy = [row[:] for row in self.boardCopy]
-        #         boardCopy[r][c] = let
-        #         if self.check(boardCopy,let):
-        #             move = (r,c)
-        #             self.click(r,c)
-        #             return 0
         import random
         possibleMoves = []
+        move = (-1,-1)
         for r in range(3):
             for c in range(3):
                 if self.boardCopy[r][c] == '':
                     possibleMoves.append((r,c))
-        return possibleMoves[random.choice(range(len(possibleMoves)))]
         
+        for let in ['O','X']:
+            for i in possibleMoves:
+                bcopy = [x[:] for x in self.boardCopy]
+                bcopy[i[0]][i[1]] = let
+                if self.check(bcopy,let):
+                    move = i
+                    return move
 
+        cornersOpen = [x for x in possibleMoves if x in [(0,0),(0,2),(2,0),(2,2)]]
+        if len(cornersOpen) > 0:
+            move = cornersOpen[random.choice(range(len(cornersOpen)))]
+            return move
+
+        if (1,1) in possibleMoves:
+            move = (1,1)
+            return move
+
+        edgesOpen = [x for x in possibleMoves if x in [(0,1),(1,0),(1,2),(2,1)]]
+        if len(cornersOpen) > 0:
+            move = edgesOpen[random.choice(range(len(edgesOpen)))]
+        return move
 
 
 if __name__ == "__main__":
